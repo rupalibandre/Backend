@@ -93,7 +93,6 @@ def register(
 # ==========================
 # USER LOGIN
 # ==========================
-
 @app.post("/login", response_model=schemas.Token)
 def login(
     user: schemas.UserLogin,
@@ -114,17 +113,8 @@ def login(
         )
 
     print("Email :", user.email)
-print("Entered Password :", user.password)
-print("Stored Hash :", db_user.hashed_password)
-
-result = verify_password(user.password, db_user.hashed_password)
-print("Password Match :", result)
-
-if not result:
-    raise HTTPException(
-        status_code=401,
-        detail="Invalid email or password"
-    )
+    print("Entered Password :", user.password)
+    print("Stored Hash :", db_user.hashed_password)
 
     password_ok = verify_password(
         user.password,
@@ -149,162 +139,4 @@ if not result:
     return {
         "access_token": token,
         "token_type": "bearer"
-    }
-
-# ==========================
-# TODO CREATE
-# ==========================
-
-@app.post("/todos/", response_model=schemas.TodoResponse)
-def create_todo(
-    todo: schemas.TodoCreate,
-    db: Session = Depends(get_db)
-):
-
-    new_todo = models.Todo(
-        **todo.model_dump()
-    )
-
-
-    db.add(new_todo)
-    db.commit()
-    db.refresh(new_todo)
-
-
-    return new_todo
-
-
-
-
-
-# ==========================
-# TODO READ ALL
-# ==========================
-
-@app.get("/todos/", response_model=List[schemas.TodoResponse])
-def get_todos(
-    skip: int = 0,
-    limit: int = 10,
-    db: Session = Depends(get_db)
-):
-
-    return (
-        db.query(models.Todo)
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
-
-
-
-
-
-# ==========================
-# TODO READ ONE
-# ==========================
-
-@app.get("/todos/{todo_id}", response_model=schemas.TodoResponse)
-def get_todo(
-    todo_id: int,
-    db: Session = Depends(get_db)
-):
-
-    todo = (
-        db.query(models.Todo)
-        .filter(
-            models.Todo.id == todo_id
-        )
-        .first()
-    )
-
-
-    if not todo:
-        raise HTTPException(
-            status_code=404,
-            detail="Todo not found"
-        )
-
-
-    return todo
-
-
-
-
-
-# ==========================
-# TODO UPDATE
-# ==========================
-
-@app.put("/todos/{todo_id}", response_model=schemas.TodoResponse)
-def update_todo(
-    todo_id: int,
-    updates: schemas.TodoUpdate,
-    db: Session = Depends(get_db)
-):
-
-    todo = (
-        db.query(models.Todo)
-        .filter(
-            models.Todo.id == todo_id
-        )
-        .first()
-    )
-
-
-    if not todo:
-        raise HTTPException(
-            status_code=404,
-            detail="Todo not found"
-        )
-
-
-    for field, value in updates.model_dump(
-        exclude_unset=True
-    ).items():
-
-        setattr(todo, field, value)
-
-
-    db.commit()
-    db.refresh(todo)
-
-
-    return todo
-
-
-
-
-
-# ==========================
-# TODO DELETE
-# ==========================
-
-@app.delete("/todos/{todo_id}")
-def delete_todo(
-    todo_id: int,
-    db: Session = Depends(get_db)
-):
-
-    todo = (
-        db.query(models.Todo)
-        .filter(
-            models.Todo.id == todo_id
-        )
-        .first()
-    )
-
-
-    if not todo:
-        raise HTTPException(
-            status_code=404,
-            detail="Todo not found"
-        )
-
-
-    db.delete(todo)
-    db.commit()
-
-
-    return {
-        "message": f"Todo {todo_id} deleted successfully"
     }

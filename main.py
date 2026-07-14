@@ -113,7 +113,18 @@ def login(
             detail="Invalid email or password"
         )
 
-    
+    print("Email :", user.email)
+print("Entered Password :", user.password)
+print("Stored Hash :", db_user.hashed_password)
+
+result = verify_password(user.password, db_user.hashed_password)
+print("Password Match :", result)
+
+if not result:
+    raise HTTPException(
+        status_code=401,
+        detail="Invalid email or password"
+    )
 
     password_ok = verify_password(
         user.password,
